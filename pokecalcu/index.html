@@ -17,6 +17,30 @@
     --danger:#ff5a5a; --danger2:#ff8f6b; --good:#37c2a8; --good2:#5ec8ef;
     --accent:#ffcb05; --accent-blue:#2a75bb;
     --radius:14px;
+
+    --type-water: #3199E1;
+    --type-grass: #429837;
+    --type-fire: #E5623E;
+
+    --type-electric: #DFBC28;
+    --type-bug: #A09F27;
+    --type-dark: #504647;
+
+    --type-poison: #9354CB;
+    --type-dragon: #576FBC;
+    --type-ice: #47C9C8;
+
+    --type-steel: #74AFCB;
+    --type-fighting: #E48F21;
+    --type-ground: #A3733D;
+
+    --type-ghost: #6E4570;
+    --type-psychic: #EA6C8D;
+    --type-fairy: #E08CE1;
+
+    --type-flying: #75AACF;
+    --type-rock: #AAA482;
+    --type-normal: #828282;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -266,7 +290,7 @@ const DEX_BASE = [[1,"妙蛙種子"],[2,"妙蛙草"],[3,"妙蛙花"],[4,"小火�
 const DEX_U=(()=>{const s=new Set(),o=[];for(const d of DEX_BASE){if(!s.has(d[0])){s.add(d[0]);o.push(d);}}return o;})();
 
 const TYPE_ZH = {normal:"一般",fire:"火",water:"水",electric:"電",grass:"草",ice:"冰",fighting:"格鬥",poison:"毒",ground:"地面",flying:"飛行",psychic:"超能力",bug:"蟲",rock:"岩石",ghost:"幽靈",dragon:"龍",dark:"惡",steel:"鋼",fairy:"妖精"};
-const TYPE_COLOR = {normal:"#9098A1",fire:"#E7623E",water:"#4A90DA",electric:"#F3D23B",grass:"#5FBD58",ice:"#75D0C1",fighting:"#CE416B",poison:"#AA6BC8",ground:"#D97845",flying:"#8FA9DE",psychic:"#F85888",bug:"#92BC2C",rock:"#C9BB8A",ghost:"#5F6DBC",dragon:"#0C69C8",dark:"#595761",steel:"#5A8EA2",fairy:"#EC8FE6"};
+const TYPE_COLOR = {normal:"#828282",fire:"#E5623E",water:"#3199E1",electric:"#DFBC28",grass:"#429837",ice:"#47C9C8",fighting:"#E48F21",poison:"#9354CB",ground:"#A3733D",flying:"#75AACF",psychic:"#EA6C8D",bug:"#A09F27",rock:"#AAA482",ghost:"#6E4570",dragon:"#576FBC",dark:"#504647",steel:"#74AFCB",fairy:"#E08CE1"};
 const ALL_TYPES = Object.keys(TYPE_ZH);
 
 const GEN = [
@@ -688,9 +712,9 @@ function showState(html, isErr){
   document.getElementById("result").style.display="none";
 }
 
-function currentGen(){ const v=document.getElementById("gen").value; return (v==="all"||!v)?9:parseInt(v,10); }
-function genLabel(){ const v=document.getElementById("gen").value; if(!v) return "首頁"; if(v==="all") return "全國圖鑑"; if(v==="mega") return "超級進化"; if(v==="gmax") return "超極巨化"; return (GEN.find(g=>g.n===parseInt(v,10))||{}).zh; }
-function genTitle(){ const v=document.getElementById("gen").value; if(!v) return "首頁"; if(v==="all") return "全國圖鑑"; if(v==="mega") return "超級進化"; if(v==="gmax") return "超極巨化"; const g=GEN.find(x=>x.n===parseInt(v,10)); return g?`${g.zh} · ${g.region}`:"圖鑑"; }
+function currentGen(){ const v=document.getElementById("gen").value; return !v?9:parseInt(v,10); }
+function genLabel(){ const v=document.getElementById("gen").value; if(!v) return "首頁"; if(v==="mega") return "超級進化"; if(v==="gmax") return "超極巨化"; return (GEN.find(g=>g.n===parseInt(v,10))||{}).zh; }
+function genTitle(){ const v=document.getElementById("gen").value; if(!v) return "首頁"; if(v==="mega") return "超級進化"; if(v==="gmax") return "超極巨化"; const g=GEN.find(x=>x.n===parseInt(v,10)); return g?`${g.zh} · ${g.region}`:"圖鑑"; }
 
 const GEN_RANGE={1:[1,151],2:[152,251],3:[252,386],4:[387,493],5:[494,649],6:[650,721],7:[722,809],8:[810,905],9:[906,1025]};
 function baseForGen(n){ const r=GEN_RANGE[n]||[1,99999]; return DEX_U.filter(d=>d[0]>=r[0]&&d[0]<=r[1]).map(d=>({z:d[1],q:[String(d[0])],n:d[0]})); }
@@ -858,7 +882,6 @@ function onGenChange(){
   STATE.gen=currentGen();
   document.getElementById("q").value="";
   if(!gv) showGrid(homeEntries(), "隨機探索", "隨機挑選 32 隻寶可夢");
-  else if(gv==="all") showGrid(baseAll(), "全國圖鑑", "全國圖鑑 001–1025");
   else if(gv==="mega") showGrid(megaEntries(), "超級進化", "所有可超級進化的寶可夢");
   else if(gv==="gmax") showGrid(gmaxEntries(), "超極巨化", "所有可超極巨化的寶可夢");
   else showGrid(baseForGen(parseInt(gv,10)), genTitle(), `第${gv}世代圖鑑`);
@@ -882,7 +905,6 @@ function buildChips(){
 function init(){
   const sel=document.getElementById("gen");
   const browseOpt=document.createElement("option"); browseOpt.value=""; browseOpt.textContent="選擇圖鑑分類"; browseOpt.selected=true; sel.appendChild(browseOpt);
-  const allOpt=document.createElement("option"); allOpt.value="all"; allOpt.textContent="全國圖鑑"; sel.appendChild(allOpt);
   const megaOpt=document.createElement("option"); megaOpt.value="mega"; megaOpt.textContent="超級進化"; sel.appendChild(megaOpt);
   const gmaxOpt=document.createElement("option"); gmaxOpt.value="gmax"; gmaxOpt.textContent="超極巨化"; sel.appendChild(gmaxOpt);
   GEN.forEach(g=>{ const o=document.createElement("option"); o.value=g.n; o.textContent=`${g.zh} · ${g.region}`; sel.appendChild(o); });
