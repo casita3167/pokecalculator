@@ -123,7 +123,7 @@
   @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
   .hero{
-    display:grid;grid-template-columns:200px 1fr;gap:8px 26px;
+    display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 26px;
     background:linear-gradient(180deg,var(--panel2),var(--panel-solid));
     border:1px solid var(--line);border-radius:20px;padding:22px 24px;position:relative;overflow:hidden;
   }
@@ -153,6 +153,8 @@
   .tera-clear{border:0;background:transparent;color:var(--dim);font-size:12px;cursor:pointer;padding:5px 3px}
   .tera-clear:hover{color:var(--danger)}
 
+  .id-block{grid-column:2}
+  .type-block{grid-column:2;margin-top:2px}
   .abil-block{grid-column:2;margin-top:14px}
   .sec-label{font-size:11px;font-family:"JetBrains Mono",monospace;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
   .sec-label::before{content:"";width:14px;height:2px;background:var(--accent);border-radius:2px}
@@ -209,7 +211,8 @@
   @media (max-width:720px){
     .hero{grid-template-columns:1fr;text-align:center}
     .art{grid-row:auto;justify-self:center}
-    .abil-block{grid-column:1}
+    .id-block,.type-block,.abil-block{grid-column:1}
+    .evotree-wrap{display:none}
     .type-row{justify-content:center}
     .names{justify-content:center}
     .sec-label{justify-content:center}
@@ -242,23 +245,31 @@
   .form-btn{border:1px solid var(--line2);background:var(--bg2);color:var(--muted);font-family:"Noto Sans TC",sans-serif;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;transition:.15s}
   .form-btn:hover{color:var(--ink);border-color:var(--accent)}
   .form-btn.on{background:var(--accent);color:#1a1400;border-color:var(--accent)}
-  .formsec{margin-top:18px;background:var(--panel-solid);border:1px solid var(--line);border-radius:16px;padding:18px 18px 20px}
-  .formsec-head{display:flex;align-items:baseline;gap:10px}
-  .formsec-head h3{margin:0;font-size:17px;font-weight:900;letter-spacing:1px}
-  .formsec-head .sub{font-family:"Space Grotesk",sans-serif;font-size:11px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
-  .formsec-note{margin:5px 0 14px;color:var(--muted);font-size:13px}
-  .rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-  .rf-card{position:relative;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px 10px 13px;text-align:center;cursor:pointer;transition:transform .12s,border-color .12s}
-  .rf-card[data-rfname]:hover{border-color:var(--accent);transform:translateY(-3px)}
-  .rf-card.on{border-color:var(--accent-blue);cursor:default;background:#101c22}
-  .rf-art{height:92px;display:flex;align-items:center;justify-content:center}
-  .rf-art img{max-width:92px;max-height:92px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
-  .rf-label{margin-top:4px;font-size:12px;font-weight:800;color:var(--accent)}
-  .rf-name{font-size:14px;font-weight:800;margin-top:1px}
-  .rf-types{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:8px}
-  .rf-cur{margin-top:8px;font-size:11px;font-weight:700;color:var(--accent-blue);letter-spacing:1px}
-  .rf-rel{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;letter-spacing:1px;padding:2px 7px;border-radius:6px;background:var(--panel2);color:var(--muted);border:1px solid var(--line2)}
-  .rf-rel.cur{background:var(--accent-blue);color:#fff;border-color:var(--accent-blue)}
+  .evotree-wrap{margin:18px 0 0;background:var(--panel-solid);border:1px solid var(--line);border-radius:16px;padding:16px 18px 18px}
+  .evotree-head{font-size:12px;letter-spacing:1px;color:var(--dim);margin:0 0 12px;font-family:"Space Grotesk",sans-serif;text-transform:uppercase}
+  .evotree-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:8px}
+  .evotree{position:relative}
+  .evotree-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+  .et-line{fill:none;stroke:rgba(120,180,190,0.38);stroke-width:1.4}
+  .evotree-grid{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+  .et-formsrow{display:flex;flex-wrap:nowrap;gap:16px;align-items:flex-start}
+  .et-row{display:grid;grid-template-columns:repeat(4,112px);gap:14px 16px;justify-items:center}
+  .et-down{color:var(--accent);display:flex;margin-left:45px}
+  .et-node{text-align:center;cursor:pointer;user-select:none;box-sizing:border-box;border:1px solid transparent;border-radius:14px;padding:6px 6px 8px;width:112px}
+  .et-node[data-jump]:hover{background:rgba(120,180,190,0.06)}
+  .et-node[data-jump]:hover .et-card{border-color:var(--line2);transform:translateY(-3px)}
+  .et-node[data-jump]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .et-node.cur{background:rgba(42,117,187,0.14);border-color:rgba(42,117,187,0.55)}
+  .et-card{width:88px;height:88px;margin:0 auto;border-radius:16px;background:linear-gradient(160deg,#1a2a32,#101a1f);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;transition:transform .12s,border-color .12s}
+  .et-node.cur .et-card{border-color:var(--accent-blue)}
+  .et-card img{max-width:80px;max-height:80px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+  .et-dex{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--accent-blue);margin-top:6px;letter-spacing:1px}
+  .et-node.cur .et-dex{color:#7fb0d8}
+  .et-nm{font-size:14px;font-weight:800;margin-top:1px;line-height:1.15}
+  .et-node.cur .et-nm{color:#dcecfa}
+  .et-lb{font-size:10px;color:var(--accent);line-height:1.15;margin-top:1px}
+  .et-types{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:7px}
+  .et-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
 </style>
 </head>
 <body>
@@ -495,7 +506,7 @@ function megaImage(n,label){
 }
 
 // ---- global state ----
-const STATE = {pokemon:null, species:null, abilities:[], gen:9, toggles:new Set(), preferredZh:null, pokerole:false, mode:"prompt", gridEntries:[], gridTitle:"", gridSub:"", fromGrid:false, megas:[], form:null, teraType:null, teraOpen:false, regional:[], speciesZh:"", evolution:[]};
+const STATE = {pokemon:null, species:null, abilities:[], gen:9, toggles:new Set(), preferredZh:null, pokerole:false, mode:"prompt", gridEntries:[], gridTitle:"", gridSub:"", fromGrid:false, megas:[], form:null, teraType:null, teraOpen:false, speciesZh:"", evoTree:null};
 function baseTypesForState(){
   const mega = (STATE.form!=null && STATE.megas && STATE.megas[STATE.form]) ? STATE.megas[STATE.form] : null;
   return mega ? mega.types : typesForGen(STATE.pokemon, STATE.gen);
@@ -644,47 +655,14 @@ function render(){
       ${o.none.length?`<div class="none-note" style="margin-top:8px">對 ${o.none.map(t=>TYPE_ZH[t]||t).join("、")} 屬性沒有效果。</div>`:""}
     </div>`).join("");
 
-  const evolutionHtml = (STATE.evolution && STATE.evolution.length) ? `
-    <div class="formsec">
-      <div class="formsec-head"><h3>進化</h3><span class="sub">EVOLUTION</span></div>
-      <p class="formsec-note">點選卡片可跳轉查看進化前 / 進化後的屬性剋制</p>
-      <div class="rf-grid">
-        ${STATE.evolution.map(e=>{
-          const imgs=[hybridBaseUrl(e.id), pokeOfficialUrl(e.id), pokeSpriteUrl(e.id)];
-          return `<div class="rf-card ${e.current?"on":""}" ${e.current?"":`data-evoname="${e.name}" data-evoid="${e.id}" tabindex="0" role="button"`}>
-            ${e.rel?`<div class="rf-rel ${e.current?"cur":""}">${e.rel}</div>`:""}
-            <div class="rf-art"><img loading="lazy" src="${imgs[0]}" alt="${e.zh}" ${imageFallbackAttrs(imgs)}></div>
-            <div class="rf-name">${e.zh}</div>
-            <div class="rf-types">${e.types.map(chip).join("")}</div>
-          </div>`;
-        }).join("")}
-      </div>
-    </div>` : "";
-
-  const regionalHtml = (STATE.regional && STATE.regional.length) ? `
-    <div class="formsec">
-      <div class="formsec-head"><h3>地區型態</h3><span class="sub">REGIONAL FORMS</span></div>
-      <p class="formsec-note">點選卡片可跳轉查看該型態的屬性剋制</p>
-      <div class="rf-grid">
-        ${STATE.regional.map(e=>{
-          const imgs=[...hybridCandidates(sp.id||p.id, e.name, sp.name||""), hybridBaseUrl(e.id), pokeOfficialUrl(e.id), pokeSpriteUrl(e.id)];
-          return `<div class="rf-card ${e.current?"on":""}" ${e.current?"":`data-rfname="${e.name}" tabindex="0" role="button"`}>
-            <div class="rf-art"><img loading="lazy" src="${imgs[0]}" alt="${STATE.speciesZh}" ${imageFallbackAttrs(imgs)}></div>
-            <div class="rf-label">${e.label}</div>
-            <div class="rf-name">${STATE.speciesZh}</div>
-            <div class="rf-types">${e.types.map(chip).join("")}</div>
-            ${e.current?'<div class="rf-cur">目前檢視</div>':""}
-          </div>`;
-        }).join("")}
-      </div>
-    </div>` : "";
+  const evoTreeHtml = STATE.evoTree ? evoTreeHTML(STATE.evoTree) : "";
 
   document.getElementById("result").innerHTML = `
     ${STATE.fromGrid?'<button class="backbtn" id="backbtn">← 返回列表</button>':''}
     ${warn}
     <div class="hero">
       <div class="art"><div class="ring"></div><img src="${art}" alt="${zh}" loading="lazy" ${imageFallbackAttrs(detailCandidates)}></div>
-      <div>
+      <div class="id-block">
         <div class="dexno">全國圖鑑 #${String(p.id).padStart(4,"0")}</div>
         <div class="names"><span class="zh">${zh}</span><span class="en">${p.name.replace(/-/g," ")}</span></div>
         ${genus?`<div class="genus">${genus}</div>`:""}
@@ -692,6 +670,8 @@ function render(){
           <button class="form-btn ${STATE.form==null?'on':''}" data-form="base">基礎</button>
           ${STATE.megas.map((m,i)=>`<button class="form-btn ${STATE.form===i?'on':''}" data-form="${i}">超級進化${m.label==="超級進化"?"":m.label}</button>`).join("")}
         </div>`:""}
+      </div>
+      <div class="type-block">
         <div class="type-row">${baseTypes.map(badge).join("")}${STATE.teraType?`<span class="type-badge tera-badge" style="background:${TYPE_COLOR[STATE.teraType]}">◇ 太晶 ${TYPE_ZH[STATE.teraType]||STATE.teraType}</span>`:""}</div>
         <div class="tera-box">
           <button class="form-btn ${STATE.teraType?'on':''}" id="tera-toggle" type="button">◇ 太晶化${STATE.teraType?`：${TYPE_ZH[STATE.teraType]}`:""}</button>
@@ -711,9 +691,6 @@ function render(){
       </div>
     </div>
 
-    ${evolutionHtml}
-    ${regionalHtml}
-
     <div class="panels">
       <div class="panel">
         <div class="panel-title"><h3>【防禦】弱點與抗性</h3><span class="sub">DEFENSE</span></div>
@@ -726,6 +703,8 @@ function render(){
         ${stabHtml}
       </div>
     </div>
+
+    ${evoTreeHtml}
   `;
 
   // wire ability toggles
@@ -756,14 +735,9 @@ function render(){
   document.querySelectorAll(".tera-type-btn").forEach(el=>{
     el.addEventListener("click",async ()=>{ STATE.teraType=el.dataset.tera; STATE.teraOpen=false; await recomputeTypes(); render(); });
   });
-  document.querySelectorAll(".rf-card[data-rfname]").forEach(el=>{
-    const jump=()=>runDetail([el.dataset.rfname], STATE.speciesZh, STATE.speciesZh, STATE.fromGrid);
-    el.addEventListener("click", jump);
-    el.addEventListener("keydown", ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); jump(); } });
-  });
-  document.querySelectorAll(".rf-card[data-evoname]").forEach(el=>{
-    const nm=el.dataset.evoname, id=el.dataset.evoid, zh=DEX_ZH[id]||nm;
-    const jump=()=>runDetail([nm, String(id)], zh, zh, STATE.fromGrid);
+  document.querySelectorAll(".et-node[data-jump]").forEach(el=>{
+    const nm=el.dataset.jump, zh=el.dataset.jumpzh||nm;
+    const jump=()=>runDetail([nm], zh, zh, STATE.fromGrid);
     el.addEventListener("click", jump);
     el.addEventListener("keydown", ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); jump(); } });
   });
@@ -869,74 +843,245 @@ function imageFallbackAttrs(urls){
 function imageSrcForEntry(e){ return e.img || hybridBaseUrl(e.n); }
 
 // ---- 地區型態 (Regional forms) ----
-const REGION_LABELS=[["-alola","阿羅拉的樣子"],["-galar","伽勒爾的樣子"],["-hisui","洗翠的樣子"],["-paldea","帕底亞的樣子"]];
+// 造型/頭巾等非地區型態（名稱雖含地區字樣，例如 pikachu-alola-cap）須排除
+function _isCostumeForm(name){
+  const t=String(name||"").toLowerCase().split("-");
+  return t.includes("cap")||t.includes("cosplay")||t.includes("starter");
+}
 function regionLabelFor(name){
   const n=String(name||"").toLowerCase();
   if(n==="basculin-white-striped") return "洗翠的樣子";
-  for(const [suf,lab] of REGION_LABELS){
-    if(n.includes(suf)){
-      if(suf==="-paldea"){
-        if(n.includes("combat")) return "帕底亞的樣子（鬥牛種）";
-        if(n.includes("blaze")) return "帕底亞的樣子（火熾種）";
-        if(n.includes("aqua")) return "帕底亞的樣子（淨水種）";
-      }
-      return lab;
-    }
+  if(_isCostumeForm(n)) return null;
+  const t=n.split("-");
+  if(t.includes("alola")) return "阿羅拉的樣子";
+  if(t.includes("galar")) return "伽勒爾的樣子";
+  if(t.includes("hisui")) return "洗翠的樣子";
+  if(t.includes("paldea")){
+    if(t.includes("combat")) return "帕底亞的樣子／鬥戰種";
+    if(t.includes("blaze")) return "帕底亞的樣子／火熾種";
+    if(t.includes("aqua")) return "帕底亞的樣子／水瀾種";
+    return "帕底亞的樣子";
   }
   return null;
 }
-// 讀取此物種的所有地區型態；若沒有地區型態則回傳 []（不顯示卡片區）
-async function buildRegionalForms(sp, currentPokemon){
-  const varieties = sp.varieties || [];
-  const regionals=[], seen=new Set();
-  for(const v of varieties){
-    const nm=v.pokemon && v.pokemon.name; if(!nm) continue;
-    const lab=regionLabelFor(nm);
-    if(lab && !seen.has(lab)){ seen.add(lab); regionals.push({name:nm,label:lab}); }
+// 由寶可夢名稱取得型態鍵（區分地區型態；帕底亞納入以處理烏波等分支）
+function formKeyOf(name){
+  const n=String(name||"").toLowerCase();
+  if(n==="basculin-white-striped") return "hisui";
+  if(_isCostumeForm(n)) return "base";
+  const t=n.split("-");
+  if(t.includes("alola")) return "alola";
+  if(t.includes("galar")) return "galar";
+  if(t.includes("hisui")) return "hisui";
+  if(t.includes("paldea")) return "paldea";
+  return "base";
+}
+// 地區型態進化成「不同物種」的覆蓋表：parent 物種 → { 型態鍵: [該型態會進化成的子物種] }
+const BRANCH_OVERRIDE = {
+  wooper:    { base:["quagsire"], paldea:["clodsire"] },
+  meowth:    { base:["persian"],  alola:["persian"], galar:["perrserker"] },
+  yamask:    { base:["cofagrigus"], galar:["runerigus"] },
+  farfetchd: { base:[], galar:["sirfetchd"] },
+  corsola:   { base:[], galar:["cursola"] },
+  sneasel:   { base:["weavile"], hisui:["sneasler"] },
+  qwilfish:  { base:[], hisui:["overqwil"] },
+  linoone:   { base:[], galar:["obstagoon"] },
+  basculin:  { base:[], hisui:["basculegion"] }
+};
+
+// ---- 進化 / 型態 技能樹 ----
+async function buildEvoTree(sp, cur){
+  if(!sp) return null;
+  const hasRegional=(sp.varieties||[]).some(v=>v.pokemon&&regionLabelFor(v.pokemon.name));
+  let cd=null;
+  if(sp.evolution_chain && sp.evolution_chain.url){ try{ cd = await jget(sp.evolution_chain.url); }catch(e){ cd=null; } }
+  const smap={};
+  if(cd && cd.chain){
+    (function walk(node,parent){
+      const nm=node && node.species && node.species.name; if(!nm) return;
+      smap[nm]={name:nm,parent,children:(node.evolves_to||[]).map(c=>c.species&&c.species.name).filter(Boolean)};
+      (node.evolves_to||[]).forEach(c=>walk(c,nm));
+    })(cd.chain,null);
   }
-  if(!regionals.length) return [];
-  const def = varieties.find(v=>v.is_default) || varieties[0];
-  const list = [{name:def.pokemon.name,label:"原始樣子",base:true}, ...regionals];
-  const cur = currentPokemon ? currentPokemon.name : "";
-  const out = await Promise.all(list.map(async item=>{
-    let pk = (currentPokemon && currentPokemon.name===item.name) ? currentPokemon : null;
-    if(!pk){ try{ pk = await jget(`${API}/pokemon/${item.name}`); }catch(e){ pk=null; } }
-    if(!pk) return null;
-    return { name:item.name, label:item.label, base:!!item.base,
-             types:typesForGen(pk, STATE.gen), id:pk.id, current:pk.name===cur };
-  }));
-  return out.filter(Boolean);
+  // 確保目前物種一定在圖中（即使沒有進化鏈資料）
+  if(!smap[sp.name]) smap[sp.name]={name:sp.name,parent:null,children:[]};
+  // 單一物種又無地區型態時直接跳出，省去多餘請求；有地區型態則照常建樹
+  if(Object.keys(smap).length<=1 && !hasRegional) return null;
+  const curSpecies = sp.name;
+  const curKey = formKeyOf(cur ? cur.name : "");
+
+  const spCache={};
+  async function getSp(nm){ if(nm in spCache) return spCache[nm]; try{ return spCache[nm]=await jget(`${API}/pokemon-species/${nm}`); }catch(e){ return spCache[nm]=null; } }
+  // 取某物種可顯示的型態：{dexId, forms:{key:{pokemonName,label}}}
+  async function formsOf(nm){
+    const s=await getSp(nm); const out={dexId:null, forms:{}, list:[]};
+    if(!s){ out.forms.base={pokemonName:nm,label:""}; out.list=[{key:"base",pokemonName:nm,label:""}]; return out; }
+    out.dexId=s.id;
+    const def=(s.varieties||[]).find(v=>v.is_default);
+    const baseName=(def?def.pokemon.name:nm);
+    out.forms.base={pokemonName:baseName,label:""};
+    out.list.push({key:"base",pokemonName:baseName,label:""});
+    for(const v of (s.varieties||[])){
+      const pn=v.pokemon&&v.pokemon.name; if(!pn||pn===baseName) continue;
+      const k=formKeyOf(pn); const lab=regionLabelFor(pn);
+      if(k!=="base" && lab){
+        if(!out.forms[k]) out.forms[k]={pokemonName:pn,label:lab}; // 每個型態鍵取一個代表（供進化連線比對）
+        out.list.push({key:k,pokemonName:pn,label:lab});          // 全部型態（供顯示，含帕底亞三品種）
+      }
+    }
+    return out;
+  }
+
+  // 顯示物種集合＝目前型態的血統（祖先 + 自己 + 依型態分支的後代）
+  const display=new Set();
+  { let x=curSpecies; while(x){ display.add(x); x=smap[x]?smap[x].parent:null; } }
+  async function walkDown(species, key){
+    const node=smap[species]; if(!node) return;
+    let children=node.children;
+    if(BRANCH_OVERRIDE[species]) children = BRANCH_OVERRIDE[species][key] || BRANCH_OVERRIDE[species].base || [];
+    for(const ch of children){
+      if(!smap[ch]) continue;
+      display.add(ch);
+      const f=await formsOf(ch);
+      const ckey=(key!=="base" && f.forms[key]) ? key : "base";
+      await walkDown(ch, ckey);
+    }
+  }
+  await walkDown(curSpecies, curKey);
+
+  // 深度（距根）
+  function depthOf(species){ let d=0,x=species; while(smap[x]&&smap[x].parent){ d++; x=smap[x].parent; } return d; }
+
+  // 建立節點
+  const speciesList=[...display];
+  const formsMap={};
+  await Promise.all(speciesList.map(async nm=>{ formsMap[nm]=await formsOf(nm); }));
+  const nodes=[]; const byId={};
+  for(const nm of speciesList){
+    const f=formsMap[nm]; const dexId=f.dexId; const zh=DEX_ZH[dexId]||nm;
+    const items=(f.list||[]).slice().sort((a,b)=> a.key==="base"?-1:b.key==="base"?1:0);
+    for(const item of items){
+      const k=item.key; const pn=item.pokemonName;
+      let pk=(cur&&cur.name===pn)?cur:null;
+      if(!pk){ try{ pk=await jget(`${API}/pokemon/${pn}`); }catch(e){ pk=null; } }
+      if(!pk) continue;
+      const imgs = k==="base"
+        ? [hybridBaseUrl(dexId), pokeOfficialUrl(pk.id), pokeSpriteUrl(pk.id)]
+        : [...hybridCandidates(dexId, pn, nm), pokeOfficialUrl(pk.id), pokeSpriteUrl(pk.id)];
+      const id=`${nm}__${pn}`;
+      const node={id, species:nm, key:k, pokemonName:pn, zh, formLabel:item.label, dexId,
+                  types:typesForGen(pk, STATE.gen), imgs, current:(cur&&cur.name===pn), depth:depthOf(nm)};
+      nodes.push(node); byId[id]=node;
+    }
+  }
+  if(nodes.length<=1) return null; // 只有本體、無進化也無地區型態 → 不顯示
+
+  // 邊：每個非根節點連到父物種的對應型態節點
+  const edges=[];
+  for(const n of nodes){
+    const ps=smap[n.species]?smap[n.species].parent:null; if(!ps) continue;
+    let pk;
+    if(BRANCH_OVERRIDE[ps]){
+      pk="base";
+      for(const kk of Object.keys(BRANCH_OVERRIDE[ps])){ if((BRANCH_OVERRIDE[ps][kk]||[]).includes(n.species)){ pk=kk; break; } }
+    } else {
+      pk = (formsMap[ps] && formsMap[ps].forms[n.key]) ? n.key : "base";
+    }
+    const pForm = formsMap[ps] && formsMap[ps].forms[pk];
+    const pid = pForm ? `${ps}__${pForm.pokemonName}` : null;
+    if(pid && byId[pid]) edges.push([pid, n.id]);
+  }
+
+  // 版面：column=depth，row=同欄內序（base 優先）
+  const cols={};
+  for(const n of nodes){ (cols[n.depth]=cols[n.depth]||[]).push(n); }
+  const maxDepth=Math.max(...nodes.map(n=>n.depth));
+  let maxRows=1;
+  for(let d=0; d<=maxDepth; d++){ const arr=cols[d]||[]; arr.forEach((n,i)=>{ n.row=i; }); maxRows=Math.max(maxRows, arr.length); }
+  return {nodes, edges, cols:maxDepth+1, rows:maxRows};
 }
 
-// ---- 進化 (Evolution chain) ----
-// 讀取此物種的進化樹並攤平；沒有進化關係則回傳 []（不顯示卡片區）
-async function buildEvolution(sp, currentPokemon){
-  if(!sp.evolution_chain || !sp.evolution_chain.url) return [];
-  let chain;
-  try{ const data=await jget(sp.evolution_chain.url); chain=data.chain; }catch(e){ return []; }
-  const nodes=[];
-  (function walk(node, depth){
-    if(node && node.species && node.species.name) nodes.push({name:node.species.name, depth});
-    (node.evolves_to||[]).forEach(ch=>walk(ch, depth+1));
-  })(chain, 0);
-  if(nodes.length<=1) return [];
-  const curName = sp.name;
-  const curNode = nodes.find(nd=>nd.name===curName);
-  const curDepth = curNode ? curNode.depth : 0;
-  const out = await Promise.all(nodes.map(async nd=>{
-    let pk=(currentPokemon && currentPokemon.name===nd.name) ? currentPokemon : null;
-    if(!pk){ try{ pk=await jget(`${API}/pokemon/${nd.name}`); }catch(e){ pk=null; } }
-    if(!pk) return null;
-    const id=pk.id;
-    const zh=DEX_ZH[id] || nd.name;
-    const current = nd.name===curName;
-    let rel="";
-    if(current) rel="目前";
-    else if(nd.depth<curDepth) rel="進化前";
-    else if(nd.depth>curDepth) rel="進化後";
-    return { name:nd.name, id, zh, types:typesForGen(pk, STATE.gen), rel, current };
-  }));
-  return out.filter(Boolean);
+// 產生技能樹 HTML（絕對定位節點 + SVG 連線）
+// 單一節點內容（圖卡 + 編號 + 名字 + 型態標）
+function evoNodeInner(n){
+  const dex = n.dexId ? String(n.dexId).padStart(4,"0") : "";
+  const dots = n.types.map(t=>`<span class="et-dot" style="background:${TYPE_COLOR[t]||'#888'}" title="${TYPE_ZH[t]||t}"></span>`).join("");
+  const lbHtml = (n.formLabel||"").replace("／","<br>");
+  return `<div class="et-card"><img loading="lazy" src="${n.imgs[0]}" alt="${n.zh}" ${imageFallbackAttrs(n.imgs)}></div>
+    ${dex?`<div class="et-dex">${dex}</div>`:""}
+    <div class="et-nm">${n.zh}</div>
+    ${n.formLabel?`<div class="et-lb">${lbHtml}</div>`:""}
+    <div class="et-types">${dots}</div>`;
+}
+function evoNodeAttrs(n){
+  return `class="et-node ${n.current?'cur':''}" ${n.current?'':`data-jump="${n.pokemonName}" data-jumpzh="${n.zh}" tabindex="0" role="button"`} title="${n.zh}${n.formLabel?'（'+n.formLabel+'）':''}"`;
+}
+
+function evoTreeHTML(tree){
+  if(!tree || !tree.nodes.length) return "";
+  // 每個深度的節點數；最寬一層 >=4 視為多分支 → 用格狀（上母體、下箭頭、子代排格）
+  const byDepth={}; tree.nodes.forEach(n=>{ (byDepth[n.depth]=byDepth[n.depth]||[]).push(n); });
+  const depths=Object.keys(byDepth).map(Number).sort((a,b)=>a-b);
+  const widest=Math.max(...depths.map(d=>byDepth[d].length));
+  const maxDepth=Math.max(...depths);
+  let inner;
+  if(maxDepth===0) inner = evoTreeFormsRow(tree);       // 無進化、只有型態 → 並排一列
+  else if(widest>=4) inner = evoTreeGrid(tree, byDepth, depths); // 伊布型多分支 → 四個換行
+  else inner = evoTreeHorizontal(tree);                 // 線性 / 小分岔 → 橫式連線
+  return `<div class="evotree-wrap">
+    <div class="evotree-head">進化 · 型態</div>
+    ${inner}
+  </div>`;
+}
+
+// 無進化、只有地區型態：全部並排一列（不換行，過寬則橫向捲動）
+function evoTreeFormsRow(tree){
+  const cells=tree.nodes.map(n=>`<div ${evoNodeAttrs(n)}>${evoNodeInner(n)}</div>`).join("");
+  return `<div class="evotree-scroll"><div class="et-formsrow">${cells}</div></div>`;
+}
+
+// 格狀（伊布型多分支）：逐層由上往下，一排四個、超過換行；層間以向下箭頭連接
+function evoTreeGrid(tree, byDepth, depths){
+  let html="";
+  depths.forEach((d,i)=>{
+    const cells=byDepth[d].map(n=>`<div ${evoNodeAttrs(n)}>${evoNodeInner(n)}</div>`).join("");
+    html+=`<div class="et-row">${cells}</div>`;
+    if(i<depths.length-1) html+=`<div class="et-down" aria-hidden="true"><svg width="22" height="20" viewBox="0 0 22 20"><path d="M4 3 L11 10 L18 3 M4 9 L11 16 L18 9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
+  });
+  return `<div class="evotree-grid">${html}</div>`;
+}
+
+// 橫式（線性 / 小分岔）：依深度為欄、絕對定位 + SVG 連線
+function evoTreeHorizontal(tree){
+  const CW=88, NW=116, COL_W=142, ROW_H=180, PADX=10, PADY=10;
+  const W = tree.cols*COL_W + PADX*2;
+  const H = tree.rows*ROW_H + PADY*2 + 14;
+  const cx=n=>PADX + n.depth*COL_W + COL_W/2;
+  const cy=n=>PADY + n.row*ROW_H + CW/2;
+  const byId={}; tree.nodes.forEach(n=>byId[n.id]=n);
+  let lines="";
+  for(const [a,b] of tree.edges){
+    const na=byId[a], nb=byId[b]; if(!na||!nb) continue;
+    const x1=cx(na)+CW/2, y1=cy(na), x2=cx(nb)-CW/2, y2=cy(nb);
+    if(Math.abs(y1-y2)<2){
+      lines+=`<path d="M${x1} ${y1} L${x2} ${y2}" class="et-line" marker-end="url(#etar)"/>`;
+    } else {
+      const mx=(x1+x2)/2;
+      lines+=`<path d="M${x1} ${y1} L${mx} ${y1} L${mx} ${y2} L${x2} ${y2}" class="et-line" marker-end="url(#etar)"/>`;
+    }
+  }
+  let nodesHtml="";
+  for(const n of tree.nodes){
+    const left=cx(n)-NW/2, top=cy(n)-CW/2;
+    nodesHtml+=`<div ${evoNodeAttrs(n)} style="position:absolute;left:${left}px;top:${top}px;width:${NW}px">${evoNodeInner(n)}</div>`;
+  }
+  return `<div class="evotree-scroll"><div class="evotree" style="width:${W}px;height:${H}px">
+    <svg class="evotree-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <defs><marker id="etar" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      ${lines}
+    </svg>
+    ${nodesHtml}
+  </div></div>`;
 }
 
 function isMegaKW(raw){ const n=normZh(raw); return n==="超級進化"||n==="超進化"||n==="mega"||n==="megaevolution"; }
@@ -995,8 +1140,7 @@ async function runDetail(cands, zh, label, fromGrid, megaLabel){
     STATE.megas = MEGA_DB[String(p.id)] || []; STATE.form=megaLabel ? STATE.megas.findIndex(m=>m.label===megaLabel) : null; if(STATE.form<0) STATE.form=null; STATE.teraType=null; STATE.teraOpen=false;
     STATE.abilities=p.abilities.map(a=>{ const slug=a.ability.name; const rec=ABIL_DB[slug]||[slug,"",""]; return {key:slug,hidden:a.is_hidden,zh:rec[0]||slug,descO:rec[1]||"",descP:rec[2]||""}; });
     STATE.speciesZh = DEX_ZH[sp.id] || locName(sp.names, ["zh-Hant"], sp.name||p.name);
-    const [_regional,_evolution] = await Promise.all([ buildRegionalForms(sp, p), buildEvolution(sp, p) ]);
-    STATE.regional = _regional; STATE.evolution = _evolution;
+    STATE.evoTree = await buildEvoTree(sp, p);
     await recomputeTypes();
     STATE.mode="detail";
     render();
