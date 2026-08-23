@@ -270,6 +270,55 @@
   .et-lb{font-size:10px;color:var(--accent);line-height:1.15;margin-top:1px}
   .et-types{display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-top:7px}
   .et-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+  /* ---- multi-select team feature ---- */
+  .pcard{position:relative}
+  .pcard .pick{position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:7px;
+    background:rgba(10,14,16,.72);border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;
+    z-index:2;cursor:pointer;transition:.15s}
+  .pcard .pick:hover{border-color:var(--accent)}
+  .pcard .pick.on{background:var(--accent);border-color:var(--accent)}
+  .pcard .pick.on::after{content:"✓";color:#1a1400;font-weight:900;font-size:13px;line-height:1}
+  .pcard.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+
+  .detail-pick{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line2);background:var(--bg2);
+    color:var(--muted);font-family:"Noto Sans TC",sans-serif;font-size:12px;font-weight:700;padding:6px 13px;
+    border-radius:999px;cursor:pointer;transition:.15s;margin-top:11px}
+  .detail-pick:hover{color:var(--ink);border-color:var(--accent)}
+  .detail-pick.on{background:var(--accent);color:#1a1400;border-color:var(--accent)}
+
+  .teambar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;
+    background:rgba(16,22,25,.94);backdrop-filter:blur(10px);border:1px solid var(--line2);
+    border-radius:999px;padding:9px 10px 9px 18px;display:flex;align-items:center;gap:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45);max-width:92vw}
+  .teambar .tb-count{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink);white-space:nowrap}
+  .teambar .tb-count b{color:var(--accent)}
+  .teambar button{font-family:"Noto Sans TC",sans-serif;font-weight:700;font-size:12.5px;border-radius:999px;
+    cursor:pointer;transition:.15s;white-space:nowrap}
+  .teambar .tb-clear{background:transparent;border:1px solid var(--line2);color:var(--muted);padding:8px 14px}
+  .teambar .tb-clear:hover{color:var(--ink);border-color:var(--accent)}
+  .teambar .tb-view{background:var(--accent);border:1px solid var(--accent);color:#1a1400;padding:8px 16px}
+  .teambar .tb-view:hover{filter:brightness(1.08)}
+
+  .team-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:22px;flex-wrap:wrap}
+  .team-member{background:var(--panel-solid);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:16px}
+  .team-member-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .team-member-top img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4))}
+  .team-member-name{font-weight:900;font-size:16px}
+  .team-member-no{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--dim)}
+  .team-remove{margin-left:auto;background:transparent;border:1px solid var(--line2);color:var(--muted);
+    font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;cursor:pointer;transition:.15s}
+  .team-remove:hover{color:var(--ink);border-color:#e0554f}
+  .team-member .abilities{margin-top:10px}
+  .team-member .panels{margin-top:10px}
+  .synergy-box{background:var(--panel-solid);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-top:16px}
+  .synergy-group{margin-top:12px}
+  .synergy-group:first-child{margin-top:0}
+  .synergy-group-title{font-size:12px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;font-family:"Space Grotesk",sans-serif;margin-bottom:8px}
+  .synergy-item{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:8px}
+  .synergy-item-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .synergy-item-members{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .synergy-item-members b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -303,6 +352,12 @@
   </div>
 
   <div id="result"></div>
+
+  <div id="teambar" class="teambar" style="display:none">
+    <span class="tb-count">已選 <b id="tb-num">0</b> 隻</span>
+    <button class="tb-clear" id="tb-clear" type="button">清除全部</button>
+    <button class="tb-view" id="tb-view" type="button">查看隊伍分析</button>
+  </div>
 
   <div class="foot">
     資料來源：<a href="https://pokeapi.co/" target="_blank" rel="noopener">PokéAPI</a>、Pokérole 3.0、<a href="https://github.com/HybridShivam/Pokemon/" target="_blank" rel="noopener">HybridShivam / Pokemon</a>　·　含第一～第九世代<br>
@@ -506,7 +561,7 @@ function megaImage(n,label){
 }
 
 // ---- global state ----
-const STATE = {pokemon:null, species:null, abilities:[], gen:9, toggles:new Set(), preferredZh:null, pokerole:false, mode:"prompt", gridEntries:[], gridTitle:"", gridSub:"", fromGrid:false, megas:[], form:null, teraType:null, teraOpen:false, speciesZh:"", evoTree:null};
+const STATE = {pokemon:null, species:null, abilities:[], gen:9, toggles:new Set(), preferredZh:null, pokerole:false, mode:"prompt", gridEntries:[], gridTitle:"", gridSub:"", fromGrid:false, megas:[], form:null, teraType:null, teraOpen:false, speciesZh:"", evoTree:null, varieties:[], team:new Map(), prevMode:"prompt", prevGridEntries:[], prevGridTitle:"", prevGridSub:""};
 function baseTypesForState(){
   const mega = (STATE.form!=null && STATE.megas && STATE.megas[STATE.form]) ? STATE.megas[STATE.form] : null;
   return mega ? mega.types : typesForGen(STATE.pokemon, STATE.gen);
@@ -588,9 +643,12 @@ function render(){
   const mega = (STATE.form!=null && STATE.megas && STATE.megas[STATE.form]) ? STATE.megas[STATE.form] : null;
   const baseTypes = baseTypesForState();
   const defTypes = activeTypesForState();
+  const _vs = STATE.varieties || [];
+  const _curVar = _vs.find(v=>v.name===p.name);
   let zh = STATE.preferredZh || DEX_ZH[sp.id] || locName(sp.names, ["zh-Hant"], p.name);
   if(mega) zh = zh + `（超級進化${mega.label==="超級進化"?"":mega.label}）`;
   if(!mega){ const _rl=regionLabelFor(p.name); if(_rl && !zh.includes(_rl)) zh = zh + `（${_rl}）`; }
+  if(!mega && _curVar && _curVar.zh && !zh.includes(_curVar.zh)) zh = zh + `（${_curVar.zh}）`;
   const abils = mega && mega.abZh ? [ (function(){ const rec=mega.abSlug?ABIL_DB[mega.abSlug]:null; return {key:mega.abSlug||"__mega", hidden:false, zh:mega.abZh, descO:rec?rec[1]:"", descP:rec?rec[2]:""}; })() ] : STATE.abilities;
   const genus = locName((sp.genera||[]).map(g=>({language:g.language,name:g.genus})), ["zh-Hant","zh-Hans"], "");
   // Detect an alternate PokeAPI form such as rotom-heat, pikachu-rock-star,
@@ -655,6 +713,10 @@ function render(){
       ${o.none.length?`<div class="none-note" style="margin-top:8px">對 ${o.none.map(t=>TYPE_ZH[t]||t).join("、")} 屬性沒有效果。</div>`:""}
     </div>`).join("");
 
+  const varietyHtml = (!mega && _vs.length>=2) ? `<div class="forms" role="group" aria-label="型態">
+          ${_vs.map(v=>`<button class="form-btn ${p.name===v.name?'on':''}" type="button" data-variety="${v.name}" data-vzh="${v.zh}">${v.zh}</button>`).join("")}
+        </div>` : "";
+
   const evoTreeHtml = STATE.evoTree ? evoTreeHTML(STATE.evoTree) : "";
 
   document.getElementById("result").innerHTML = `
@@ -670,6 +732,8 @@ function render(){
           <button class="form-btn ${STATE.form==null?'on':''}" data-form="base">基礎</button>
           ${STATE.megas.map((m,i)=>`<button class="form-btn ${STATE.form===i?'on':''}" data-form="${i}">超級進化${m.label==="超級進化"?"":m.label}</button>`).join("")}
         </div>`:""}
+        ${varietyHtml}
+        <button class="detail-pick" id="detail-pick" type="button" data-pickkey="${(function(){ const de={q:mega?[String(sp.id||p.id)]:[p.name],z:zh,megaLabel:mega?mega.label:null}; return teamKeyFor(de); })()}">+ 加入隊伍分析</button>
       </div>
       <div class="type-block">
         <div class="type-row">${baseTypes.map(badge).join("")}${STATE.teraType?`<span class="type-badge tera-badge" style="background:${TYPE_COLOR[STATE.teraType]}">◇ 太晶 ${TYPE_ZH[STATE.teraType]||STATE.teraType}</span>`:""}</div>
@@ -707,6 +771,16 @@ function render(){
     ${evoTreeHtml}
   `;
 
+  // wire team pick button for current detail
+  const detailPickBtn=document.getElementById("detail-pick");
+  if(detailPickBtn){
+    detailPickBtn.addEventListener("click",()=>{
+      const de={q: mega ? [String(sp.id||p.id)] : [p.name], z:zh, megaLabel:mega?mega.label:null};
+      toggleTeamEntry(de);
+    });
+  }
+  refreshSelectionUI();
+
   // wire ability toggles
   document.querySelectorAll(".tag.mod").forEach(el=>{
     el.addEventListener("click",()=>{
@@ -720,12 +794,19 @@ function render(){
   });
   const _bb=document.getElementById("backbtn");
   if(_bb) _bb.addEventListener("click",()=>showGrid(STATE.gridEntries,STATE.gridTitle,STATE.gridSub));
-  document.querySelectorAll(".forms .form-btn").forEach(el=>{
+  document.querySelectorAll(".forms .form-btn[data-form]").forEach(el=>{
     el.addEventListener("click", async ()=>{
       STATE.form = el.dataset.form==="base" ? null : parseInt(el.dataset.form,10);
       STATE.toggles = new Set();
       await recomputeTypes();
       render();
+    });
+  });
+  document.querySelectorAll(".forms .form-btn[data-variety]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      const nm=el.dataset.variety;
+      if(!nm || nm===STATE.pokemon.name) return;
+      runDetail([nm], STATE.speciesZh || el.dataset.vzh, el.dataset.vzh, STATE.fromGrid);
     });
   });
   const teraToggle=document.getElementById("tera-toggle");
@@ -888,6 +969,61 @@ const BRANCH_OVERRIDE = {
   linoone:   { base:[], galar:["obstagoon"] },
   basculin:  { base:[], hisui:["basculegion"] }
 };
+
+// ---- 其他型態（非地區、非超級進化）：胡帕、洛托姆、酋雷姆… ----
+// 造型／超級進化／超極巨化／地區型態不列入可切換型態（各由其他系統處理）
+function _isSwitchableVarietyName(name){
+  const t=String(name||"").toLowerCase().split("-");
+  if(t.includes("mega")||t.includes("gmax")) return false;
+  if(t.includes("cap")||t.includes("cosplay")||t.includes("starter")||t.includes("totem")) return false;
+  if(regionLabelFor(name)) return false;
+  return true;
+}
+// 型態繁中標籤（僅收錄常見會改變屬性的多型態；其餘由字尾推導）
+const FORM_ZH = {
+  "hoopa":"懲戒","hoopa-unbound":"解放",
+  "rotom":"基礎","rotom-heat":"加熱","rotom-wash":"清洗","rotom-frost":"結冰","rotom-fan":"旋轉","rotom-mow":"除草",
+  "kyurem-black":"闇黑","kyurem-white":"焰白",
+  "necrozma-dusk":"黃昏之鬃","necrozma-dawn":"拂曉之翼","necrozma-ultra":"究極",
+  "calyrex-ice":"白馬","calyrex-shadow":"黑馬",
+  "wormadam-plant":"草木蓑衣","wormadam-sandy":"砂土蓑衣","wormadam-trash":"垃圾蓑衣",
+  "shaymin-land":"陸上","shaymin-sky":"天空",
+  "meloetta":"歌聲","meloetta-pirouette":"舞步",
+  "oricorio":"熱情","oricorio-pom-pom":"啪滋啪滋","oricorio-pau":"呼拉呼拉","oricorio-sensu":"輕盈",
+  "darmanitan":"普通","darmanitan-zen":"達摩模式",
+  "ogerpon":"碧草面具","ogerpon-wellspring-mask":"水井面具","ogerpon-hearthflame-mask":"火灶面具","ogerpon-cornerstone-mask":"礎石面具",
+  "castform-sunny":"晴天","castform-rainy":"雨天","castform-snowy":"雪天"
+};
+function formZhLabel(pokemonName, speciesName){
+  if(FORM_ZH[pokemonName]) return FORM_ZH[pokemonName];
+  const sn=String(speciesName||"").toLowerCase();
+  const suffix = pokemonName.startsWith(sn+"-") ? pokemonName.slice(sn.length+1) : pokemonName;
+  if(!suffix || suffix===sn) return "基礎";
+  return suffix.split("-").map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+}
+// 取可切換的其他型態（僅保留會改變屬性者）；含預設型態供切換與比對
+async function switchableVarieties(sp, defaultPk){
+  const vs=(sp.varieties||[]);
+  const defName=((vs.find(v=>v.is_default)||{}).pokemon||{}).name || (defaultPk&&defaultPk.name);
+  const cand=vs.map(v=>v.pokemon&&v.pokemon.name).filter(Boolean)
+              .filter(nm=>nm===defName || _isSwitchableVarietyName(nm));
+  if(cand.length<=1) return [];
+  const pkByName={}; if(defaultPk) pkByName[defaultPk.name]=defaultPk;
+  await Promise.all(cand.map(async nm=>{
+    if(pkByName[nm]) return;
+    try{ pkByName[nm]=await jget(`${API}/pokemon/${nm}`); }catch(e){ pkByName[nm]=null; }
+  }));
+  const defTypes=(pkByName[defName]?typesForGen(pkByName[defName],STATE.gen):[]).join("/");
+  const out=[];
+  for(const nm of cand){
+    const pk=pkByName[nm]; if(!pk) continue;
+    const types=typesForGen(pk, STATE.gen);
+    const isDefault = nm===defName;
+    if(!isDefault && types.join("/")===defTypes) continue; // 屬性相同 → 對屬性計算無差異，不列入
+    out.push({name:nm, isDefault, zh:formZhLabel(nm, sp.name), types});
+  }
+  return out.length>=2 ? out : [];
+}
 
 // ---- 進化 / 型態 技能樹 ----
 async function buildEvoTree(sp, cur){
@@ -1102,15 +1238,20 @@ function renderCards(entries){
   const frag=document.createDocumentFragment();
   entries.forEach(e=>{
     const d=document.createElement("div");
-    d.className="pcard"; d.tabIndex=0; d.setAttribute("role","button");
+    const key=teamKeyFor(e);
+    const on=STATE.team.has(key);
+    d.className="pcard"+(on?" selected":""); d.tabIndex=0; d.setAttribute("role","button");
     const primary = imageSrcForEntry(e);
     const candidates = e.img
       ? [e.img, e.formImg, hybridBaseUrl(e.n), pokeOfficialUrl(e.n), pokeSpriteUrl(e.n)]
       : [primary, pokeOfficialUrl(e.n), pokeSpriteUrl(e.n)];
-    d.innerHTML=`<img loading="lazy" src="${primary}" alt="${e.z}" ${imageFallbackAttrs(candidates)}>`;
+    d.innerHTML=`<span class="pick${on?" on":""}" data-pickkey="${key}" role="checkbox" aria-checked="${on}" aria-label="加入隊伍分析" tabindex="0"></span><img loading="lazy" src="${primary}" alt="${e.z}" ${imageFallbackAttrs(candidates)}>`;
     const open=()=>openEntry(e);
     d.addEventListener("click",open);
     d.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); open(); } });
+    const pickEl=d.querySelector(".pick");
+    pickEl.addEventListener("click",ev=>{ ev.stopPropagation(); toggleTeamEntry(e); });
+    pickEl.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); ev.stopPropagation(); toggleTeamEntry(e); } });
     frag.appendChild(d);
   });
   grid.innerHTML=""; grid.appendChild(frag);
@@ -1141,12 +1282,196 @@ async function runDetail(cands, zh, label, fromGrid, megaLabel){
     STATE.abilities=p.abilities.map(a=>{ const slug=a.ability.name; const rec=ABIL_DB[slug]||[slug,"",""]; return {key:slug,hidden:a.is_hidden,zh:rec[0]||slug,descO:rec[1]||"",descP:rec[2]||""}; });
     STATE.speciesZh = DEX_ZH[sp.id] || locName(sp.names, ["zh-Hant"], sp.name||p.name);
     STATE.evoTree = await buildEvoTree(sp, p);
+    try{ STATE.varieties = await switchableVarieties(sp, p); }catch(e){ STATE.varieties = []; }
     await recomputeTypes();
     STATE.mode="detail";
     render();
   }catch(e){ showState(`讀取資料時發生問題，請再試一次。`, true); }
 }
 function openEntry(e){ runDetail(e.q.slice(), e.z, e.z, true, e.megaLabel||null); }
+
+// ---- multi-select team feature ----
+function teamKeyFor(e){ return (e.q && e.q.length) ? String(e.q[0]) : String(e.z); }
+function toggleTeamEntry(e){
+  const key=teamKeyFor(e);
+  if(STATE.team.has(key)) STATE.team.delete(key);
+  else STATE.team.set(key, {q:e.q.slice(), z:e.z, megaLabel:e.megaLabel||null});
+  refreshSelectionUI();
+}
+function refreshSelectionUI(){
+  updateTeamBar();
+  document.querySelectorAll(".pcard .pick[data-pickkey]").forEach(el=>{
+    const on=STATE.team.has(el.dataset.pickkey);
+    el.classList.toggle("on", on);
+    el.setAttribute("aria-checked", on?"true":"false");
+    const card=el.closest(".pcard");
+    if(card) card.classList.toggle("selected", on);
+  });
+  const dp=document.getElementById("detail-pick");
+  if(dp){
+    const on=STATE.team.has(dp.dataset.pickkey);
+    dp.classList.toggle("on", on);
+    dp.textContent = on ? "✓ 已加入隊伍分析" : "+ 加入隊伍分析";
+  }
+}
+function updateTeamBar(){
+  const bar=document.getElementById("teambar");
+  const num=document.getElementById("tb-num");
+  if(!bar||!num) return;
+  const n=STATE.team.size;
+  num.textContent=String(n);
+  bar.style.display = n>0 ? "flex" : "none";
+}
+function clearTeam(){ STATE.team.clear(); refreshSelectionUI(); }
+
+async function fetchTeamMemberData(entry){
+  const n=STATE.gen;
+  let p=null;
+  for(const key of entry.q){ try{ p=await jget(`${API}/pokemon/${key}`); break; }catch(e){} }
+  if(!p) return null;
+  let sp=null; try{ sp=await jget(p.species.url); }catch(e){ sp=null; }
+  const zh = entry.z || (sp?(DEX_ZH[sp.id]||locName(sp.names,["zh-Hant"],p.name)):p.name);
+  let types;
+  if(entry.megaLabel && MEGA_DB[String(p.id)]){
+    const m=(MEGA_DB[String(p.id)]||[]).find(x=>x.label===entry.megaLabel);
+    types = m ? m.types : typesForGen(p, n);
+  } else {
+    types = typesForGen(p, n);
+  }
+  await Promise.all(types.map(getType));
+  const abilities = p.abilities.map(a=>{
+    const slug=a.ability.name; const rec=ABIL_DB[slug]||[slug,"",""];
+    return {key:slug, hidden:a.is_hidden, zh:rec[0]||slug, descO:rec[1]||"", descP:rec[2]||""};
+  });
+  const mult = computeDefensive(types, n);
+  const off = computeOffensive(types, n);
+  const art = hybridBaseUrl(sp?sp.id:p.id) || pokeOfficialUrl(p.id);
+  return {key:teamKeyFor(entry), zh, id:p.id, types, abilities, mult, off, entry,
+    img: (p.sprites.other && p.sprites.other["official-artwork"] && p.sprites.other["official-artwork"].front_default) || pokeOfficialUrl(p.id)};
+}
+
+function computeTeamSynergy(members){
+  const n=STATE.gen;
+  const valid=typesInGen(n);
+  const weakness={}, resistance={}, immune={}, offense={};
+  valid.forEach(t=>{ weakness[t]=[]; resistance[t]=[]; immune[t]=[]; offense[t]=[]; });
+  members.forEach(m=>{
+    valid.forEach(t=>{
+      const mv=m.mult[t];
+      if(mv===0) immune[t].push(m.zh);
+      else if(mv>1) weakness[t].push(m.zh);
+      else if(mv<1) resistance[t].push(m.zh);
+    });
+    const strongSet=new Set();
+    m.off.forEach(o=>{ o.strong.forEach(t=>strongSet.add(t)); });
+    strongSet.forEach(t=>{ if(offense[t]) offense[t].push(m.zh); });
+  });
+  const pack=(obj)=>valid.filter(t=>obj[t].length>=2).map(t=>({type:t, members:obj[t]}))
+      .sort((a,b)=>b.members.length-a.members.length);
+  return { weakness:pack(weakness), resistance:pack(resistance), immune:pack(immune), offense:pack(offense) };
+}
+
+function synergyGroupHTML(title, items){
+  if(!items.length) return `<div class="synergy-group"><div class="synergy-group-title">${title}</div><div class="none-note">沒有找到至少兩隻寶可夢共通的屬性。</div></div>`;
+  return `<div class="synergy-group">
+    <div class="synergy-group-title">${title}</div>
+    ${items.map(it=>`<div class="synergy-item">
+      <div class="synergy-item-head">${badge(it.type)}</div>
+      <div class="synergy-item-members">共 <b>${it.members.length}</b> 隻：${it.members.join("、")}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function teamMemberHTML(m){
+  const byVal={};
+  Object.keys(m.mult).forEach(t=>{ const v=m.mult[t]; (byVal[v]=byVal[v]||[]).push(t); });
+  const vals=Object.keys(byVal).map(Number).sort((a,b)=>b-a);
+  const defBlocks=vals.map(v=>tierBlock(v, byVal[v])).join("");
+  const stabHtml=m.off.map(o=>`
+    <div class="stab-line">
+      <div class="stab-head">${badge(o.type)}<span class="arrow">系招式可克制：</span></div>
+      ${o.strong.length?`<div class="tchips">${o.strong.map(chip).join("")}</div>`:`<div class="none-note">沒有能造成效果絕佳的單一屬性目標。</div>`}
+    </div>`).join("");
+  const abilHtml=m.abilities.map(a=>{
+    const hiddenTag=a.hidden?`<span class="tag hidden">隱藏特性</span>`:"";
+    const txt=STATE.pokerole?(a.descP||a.descO):(a.descO||a.descP);
+    return `<div class="abil">
+      <div class="abil-head"><span class="nm">${a.zh||a.key}</span><span class="en">${a.key.replace(/-/g," ")}</span>${hiddenTag}</div>
+      ${txt?`<div class="abil-desc">${txt}</div>`:""}
+    </div>`;
+  }).join("");
+  return `<div class="team-member" data-memberkey="${m.key}">
+    <div class="team-member-top">
+      <img src="${m.img}" alt="${m.zh}" loading="lazy">
+      <div>
+        <div class="team-member-name">${m.zh}</div>
+        <div class="team-member-no">#${String(m.id).padStart(4,"0")}</div>
+        <div class="type-row" style="margin-top:6px">${m.types.map(badge).join("")}</div>
+      </div>
+      <button class="team-remove" data-removekey="${m.key}" type="button">移除</button>
+    </div>
+    <div class="abil-topbar" style="margin-top:12px"><div class="sec-label">特性 · Abilities</div></div>
+    <div class="abilities">${abilHtml||'<div class="none-note">無資料</div>'}</div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-title"><h3>【防禦】弱點與抵抗</h3><span class="sub">DEFENSE</span></div>
+        ${defBlocks}
+      </div>
+      <div class="panel">
+        <div class="panel-title"><h3>【攻擊】本系打擊面</h3><span class="sub">OFFENSE</span></div>
+        ${stabHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function showTeamAnalysis(){
+  if(!STATE.team.size) return;
+  STATE.prevMode=STATE.mode; STATE.prevGridEntries=STATE.gridEntries; STATE.prevGridTitle=STATE.gridTitle; STATE.prevGridSub=STATE.gridSub;
+  STATE.gen=currentGen();
+  showState(`<div class="loader"></div><div class="big">分析隊伍中…</div><div class="hint">正在讀取每隻寶可夢的屬性、特性與相剋資料</div>`);
+  const entries=[...STATE.team.values()];
+  let members;
+  try{
+    members = (await Promise.all(entries.map(fetchTeamMemberData))).filter(Boolean);
+  }catch(e){ members=[]; }
+  if(!members.length){ showState(`讀取隊伍資料時發生問題，請再試一次。`, true); return; }
+  STATE.mode="team";
+  const synergy=computeTeamSynergy(members);
+  const r=document.getElementById("result");
+  r.innerHTML = `
+    <button class="backbtn" id="team-backbtn">← 返回列表</button>
+    <div class="team-head">
+      <div><h2 class="browse-title">隊伍分析</h2><div class="browse-sub">已選 ${members.length} 隻寶可夢的個別資料與共通屬性分析</div></div>
+      <div class="browse-count">${members.length} 隻</div>
+    </div>
+    ${members.map(teamMemberHTML).join("")}
+    <div class="synergy-box">
+      <div class="panel-title"><h3>隊伍綜合分析</h3><span class="sub">TEAM SYNERGY</span></div>
+      <p class="panel-note">列出至少兩隻寶可夢具有相同弱點／抵抗／進攻優勢的屬性，並列出涉及的寶可夢（不做數值計數）。</p>
+      ${synergyGroupHTML("共同弱點 · Shared Weakness", synergy.weakness)}
+      ${synergyGroupHTML("共同抵抗 · Shared Resistance", synergy.resistance)}
+      ${synergyGroupHTML("共同免疫 · Shared Immunity", synergy.immune)}
+      ${synergyGroupHTML("共同進攻優勢 · Shared Offensive Edge", synergy.offense)}
+    </div>
+  `;
+  document.getElementById("state").style.display="none";
+  r.style.display="block";
+  document.getElementById("team-backbtn").addEventListener("click",()=>{
+    if(STATE.prevMode==="grid") showGrid(STATE.prevGridEntries, STATE.prevGridTitle, STATE.prevGridSub);
+    else if(STATE.prevMode==="detail" && STATE.pokemon) render();
+    else renderPrompt();
+  });
+  r.querySelectorAll(".team-remove[data-removekey]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      STATE.team.delete(btn.dataset.removekey);
+      updateTeamBar();
+      if(STATE.team.size) showTeamAnalysis();
+      else { if(STATE.prevMode==="grid") showGrid(STATE.prevGridEntries, STATE.prevGridTitle, STATE.prevGridSub); else renderPrompt(); }
+    });
+  });
+  updateTeamBar();
+}
 
 async function scan(){
   const raw=document.getElementById("q").value.trim();
@@ -1208,7 +1533,10 @@ function init(){
   dl.appendChild(frag);
 
   document.getElementById("home").addEventListener("click",()=>{ sel.value=""; document.getElementById("q").value=""; onGenChange(); });
+  document.getElementById("tb-clear").addEventListener("click",clearTeam);
+  document.getElementById("tb-view").addEventListener("click",showTeamAnalysis);
   showGrid(homeEntries(), "隨機探索", "隨機挑選 32 隻寶可夢");
+  updateTeamBar();
 }
 init();
 </script>
