@@ -1,0 +1,295 @@
+name: One-time homepage defense calculator update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/update-home-defense-calculator.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update pokecalcu homepage
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('pokecalcu/index.html')
+          s = path.read_text(encoding='utf-8')
+          original = s
+
+          # 1) Homepage cards: remove the small multi-select checkbox and selected outline.
+          s = s.replace('d.className="pcard"+(on?" selected":""); d.tabIndex=0; d.setAttribute("role","button");',
+                        'd.className="pcard"; d.tabIndex=0; d.setAttribute("role","button");')
+          s = re.sub(
+              r'd\.innerHTML=`<span class="pick\$\{on\?" on":""\}" data-pickkey="\$\{key\}" role="checkbox" aria-checked="\$\{on\}" aria-label="加入隊伍分析" tabindex="0"></span><img loading="lazy" src="\$\{primary\}" alt="\$\{e\.z\}" \$\{imageFallbackAttrs\(candidates\)\}>`;',
+              'd.innerHTML=`<img loading="lazy" src="${primary}" alt="${e.z}" ${imageFallbackAttrs(candidates)}>`;',
+              s,
+              count=1
+          )
+          s = re.sub(
+              r'\n\s*const pickEl=d\.querySelector\("\\\.pick"\);\s*\n\s*pickEl\.addEventListener\("click",ev=>\{ ev\.stopPropagation\(\); toggleTeamEntry\(e\); \}\);',
+              '', s, count=1
+          )
+          # Fallback for exact source formatting.
+          s = s.replace('\n    const pickEl=d.querySelector(".pick");\n    pickEl.addEventListener("click",ev=>{ ev.stopPropagation(); toggleTeamEntry(e); });', '')
+
+          # 2) New clean type / ability / tera defense calculator on the homepage.
+          panel_html = r'''
+  <section class="defcalc" id="defcalc" aria-labelledby="defcalc-title">
+    <div class="defcalc-head">
+      <div>
+        <div class="defcalc-kicker">TYPE DEFENSE LAB</div>
+        <h2 id="defcalc-title">屬性防禦分析</h2>
+        <p>選擇原始屬性、特性與太晶屬性，即時查看目前組合的弱點、抗性與無效屬性。</p>
+      </div>
+      <div class="defcalc-status" id="defcalc-status">一般屬性</div>
+    </div>
+
+    <div class="defcalc-controls">
+      <label class="defcalc-field">
+        <span>屬性 1</span>
+        <select id="def-type-1" aria-label="第一屬性"></select>
+      </label>
+      <label class="defcalc-field">
+        <span>屬性 2</span>
+        <select id="def-type-2" aria-label="第二屬性"></select>
+      </label>
+      <label class="defcalc-field defcalc-field-wide">
+        <span>特性</span>
+        <select id="def-ability" aria-label="防禦特性"></select>
+      </label>
+      <label class="defcalc-field defcalc-field-wide">
+        <span>太晶化</span>
+        <select id="def-tera" aria-label="太晶屬性"></select>
+      </label>
+    </div>
+
+    <div class="defcalc-summary" id="defcalc-summary"></div>
+
+    <div class="defcalc-results">
+      <div class="defcalc-group weakness">
+        <div class="defcalc-group-title"><span>弱點</span><small>WEAKNESS</small></div>
+        <div class="defcalc-chips" id="def-weak"></div>
+      </div>
+      <div class="defcalc-group resist">
+        <div class="defcalc-group-title"><span>抗性</span><small>RESISTANCE</small></div>
+        <div class="defcalc-chips" id="def-resist"></div>
+      </div>
+      <div class="defcalc-group immune">
+        <div class="defcalc-group-title"><span>無效</span><small>IMMUNITY</small></div>
+        <div class="defcalc-chips" id="def-immune"></div>
+      </div>
+    </div>
+    <div class="defcalc-note" id="defcalc-note"></div>
+  </section>
+'''
+          if 'id="defcalc"' not in s:
+              anchor = '  <div id="result"></div>'
+              if anchor not in s:
+                  raise SystemExit('Could not find result anchor for defense calculator')
+              s = s.replace(anchor, panel_html + '\n' + anchor, 1)
+
+          panel_css = r'''
+
+  /* ---- clean homepage defense calculator ---- */
+  .defcalc{margin:22px 0 26px;padding:22px;border:1px solid var(--line2);border-radius:20px;
+    background:linear-gradient(145deg,rgba(20,33,39,.96),rgba(10,16,18,.96));box-shadow:0 18px 48px rgba(0,0,0,.22)}
+  .defcalc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:18px}
+  .defcalc-kicker{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.18em;color:var(--accent);margin-bottom:5px}
+  .defcalc h2{margin:0;color:var(--ink);font-family:"Space Grotesk","Noto Sans TC",sans-serif;font-size:24px;line-height:1.2}
+  .defcalc-head p{margin:7px 0 0;color:var(--muted);font-size:13px;line-height:1.7;max-width:660px}
+  .defcalc-status{flex:none;border:1px solid var(--line2);background:rgba(255,255,255,.025);border-radius:999px;padding:7px 11px;
+    font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+  .defcalc-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .defcalc-field{display:flex;flex-direction:column;gap:7px;min-width:0}
+  .defcalc-field>span{font-size:11px;font-weight:700;color:var(--dim);letter-spacing:.04em}
+  .defcalc-field select{width:100%;appearance:none;border:1px solid var(--line2);border-radius:12px;background:var(--bg2);
+    color:var(--ink);padding:11px 34px 11px 12px;font-family:"Noto Sans TC",sans-serif;font-size:13px;outline:none;
+    background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+    background-position:calc(100% - 16px) 50%,calc(100% - 11px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .defcalc-field select:focus{border-color:rgba(255,203,5,.65);box-shadow:0 0 0 3px rgba(255,203,5,.08)}
+  .defcalc-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:17px 0 13px;padding-top:15px;border-top:1px solid var(--line)}
+  .defcalc-summary-label{font-size:11px;font-weight:700;color:var(--dim);margin-right:2px}
+  .defcalc-summary .type-badge{box-shadow:none}
+  .defcalc-arrow{color:var(--dim);font-size:13px;margin:0 3px}
+  .defcalc-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .defcalc-group{min-height:126px;border:1px solid var(--line);border-radius:15px;padding:13px;background:rgba(255,255,255,.018)}
+  .defcalc-group-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+  .defcalc-group-title span{font-size:13px;font-weight:900;color:var(--ink)}
+  .defcalc-group-title small{font-family:"JetBrains Mono",monospace;font-size:8px;letter-spacing:.12em;color:var(--dim)}
+  .defcalc-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .defchip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px 5px 6px;background:rgba(255,255,255,.035);
+    border:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink)}
+  .defchip-dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .defchip b{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--muted)}
+  .defcalc-empty{font-size:11px;color:var(--dim);line-height:1.6}
+  .defcalc-note{margin-top:11px;font-size:10.5px;color:var(--dim);line-height:1.7}
+  .defcalc-note strong{color:var(--muted)}
+  @media(max-width:780px){.defcalc{padding:17px}.defcalc-head{display:block}.defcalc-status{display:inline-block;margin-top:12px}
+    .defcalc-controls{grid-template-columns:1fr 1fr}.defcalc-results{grid-template-columns:1fr}.defcalc-group{min-height:auto}}
+  @media(max-width:480px){.defcalc-controls{grid-template-columns:1fr}.defcalc h2{font-size:21px}}
+'''
+          if 'clean homepage defense calculator' not in s:
+              idx = s.rfind('</style>')
+              if idx < 0:
+                  raise SystemExit('Could not find style close tag')
+              s = s[:idx] + panel_css + '\n' + s[idx:]
+
+          panel_js = r'''
+
+// ===== Homepage type / ability / tera defense calculator =====
+(function initDefenseCalculator(){
+  const box=document.getElementById('defcalc');
+  if(!box) return;
+
+  const T=['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+  const Z={normal:'一般',fire:'火',water:'水',electric:'電',grass:'草',ice:'冰',fighting:'格鬥',poison:'毒',ground:'地面',flying:'飛行',psychic:'超能力',bug:'蟲',rock:'岩石',ghost:'幽靈',dragon:'龍',dark:'惡',steel:'鋼',fairy:'妖精'};
+  const C={normal:'#828282',fire:'#E5623E',water:'#3199E1',electric:'#DFBC28',grass:'#429837',ice:'#47C9C8',fighting:'#E48F21',poison:'#9354CB',ground:'#A3733D',flying:'#75AACF',psychic:'#EA6C8D',bug:'#A09F27',rock:'#AAA482',ghost:'#6E4570',dragon:'#576FBC',dark:'#504647',steel:'#74AFCB',fairy:'#E08CE1'};
+
+  // Attack type -> defender type multiplier. Unlisted combinations are ×1.
+  const X={
+    normal:{rock:.5,ghost:0,steel:.5},
+    fire:{fire:.5,water:.5,grass:2,ice:2,bug:2,rock:.5,dragon:.5,steel:2},
+    water:{fire:2,water:.5,grass:.5,ground:2,rock:2,dragon:.5},
+    electric:{water:2,electric:.5,grass:.5,ground:0,flying:2,dragon:.5},
+    grass:{fire:.5,water:2,grass:.5,poison:.5,ground:2,flying:.5,bug:.5,rock:2,dragon:.5,steel:.5},
+    ice:{fire:.5,water:.5,grass:2,ice:.5,ground:2,flying:2,dragon:2,steel:.5},
+    fighting:{normal:2,ice:2,poison:.5,flying:.5,psychic:.5,bug:.5,rock:2,ghost:0,dark:2,steel:2,fairy:.5},
+    poison:{grass:2,poison:.5,ground:.5,rock:.5,ghost:.5,steel:0,fairy:2},
+    ground:{fire:2,electric:2,grass:.5,poison:2,flying:0,bug:.5,rock:2,steel:2},
+    flying:{electric:.5,grass:2,fighting:2,bug:2,rock:.5,steel:.5},
+    psychic:{fighting:2,poison:2,psychic:.5,dark:0,steel:.5},
+    bug:{fire:.5,grass:2,fighting:.5,poison:.5,flying:.5,psychic:2,ghost:.5,dark:2,steel:.5,fairy:.5},
+    rock:{fire:2,ice:2,fighting:.5,ground:.5,flying:2,bug:2,steel:.5},
+    ghost:{normal:0,psychic:2,ghost:2,dark:.5},
+    dragon:{dragon:2,steel:.5,fairy:0},
+    dark:{fighting:.5,psychic:2,ghost:2,dark:.5,fairy:.5},
+    steel:{fire:.5,water:.5,electric:.5,ice:2,rock:2,steel:.5,fairy:2},
+    fairy:{fire:.5,fighting:2,poison:.5,dragon:2,dark:2,steel:.5}
+  };
+
+  const AB=[
+    ['', '無特性修正'],
+    ['levitate','飄浮｜地面無效'],
+    ['eelevate','鰻鰻高升｜地面無效'],
+    ['earth-eater','食土｜地面無效'],
+    ['flash-fire','引火｜火無效'],
+    ['well-baked-body','焦香之軀｜火無效'],
+    ['water-absorb','儲水｜水無效'],
+    ['storm-drain','引水｜水無效'],
+    ['water-compaction','遇水凝固｜水無效'],
+    ['volt-absorb','蓄電｜電無效'],
+    ['motor-drive','電氣引擎｜電無效'],
+    ['lightning-rod','避雷針｜電無效'],
+    ['sap-sipper','食草｜草無效'],
+    ['thick-fat','厚脂肪｜火、冰傷害減半'],
+    ['heatproof','耐熱｜火傷害減半'],
+    ['water-bubble','水泡｜火傷害減半'],
+    ['dry-skin','乾燥皮膚｜水無效、火增傷'],
+    ['purifying-salt','潔淨之鹽｜幽靈傷害減半'],
+    ['filter','過濾｜效果絕佳傷害 ×0.75'],
+    ['solid-rock','堅硬岩石｜效果絕佳傷害 ×0.75'],
+    ['prism-armor','稜鏡裝甲｜效果絕佳傷害 ×0.75'],
+    ['wonder-guard','神奇守護｜僅效果絕佳招式可造成傷害']
+  ];
+
+  const q=id=>document.getElementById(id);
+  const a=q('def-type-1'), b=q('def-type-2'), ab=q('def-ability'), tera=q('def-tera');
+  const typeOptions=T.map(t=>`<option value="${t}">${Z[t]}</option>`).join('');
+  a.innerHTML=typeOptions;
+  b.innerHTML='<option value="">無第二屬性</option>'+typeOptions;
+  ab.innerHTML=AB.map(x=>`<option value="${x[0]}">${x[1]}</option>`).join('');
+  tera.innerHTML='<option value="">不太晶化</option>'+T.map(t=>`<option value="${t}">太晶・${Z[t]}</option>`).join('')+'<option value="stellar">太晶・星晶（防禦屬性不變）</option>';
+
+  // Friendly defaults: plain Normal, no ability, no tera.
+  a.value='normal'; b.value=''; ab.value=''; tera.value='';
+
+  function baseMult(atk, defs){
+    return defs.reduce((m,d)=>m*((X[atk]&&X[atk][d]!==undefined)?X[atk][d]:1),1);
+  }
+  function abilityMult(atk, m, ability){
+    const zero={levitate:'ground',eelevate:'ground','earth-eater':'ground','flash-fire':'fire','well-baked-body':'fire','water-absorb':'water','storm-drain':'water','water-compaction':'water','volt-absorb':'electric','motor-drive':'electric','lightning-rod':'electric','sap-sipper':'grass'};
+    if(zero[ability]===atk) return 0;
+    if(ability==='thick-fat' && (atk==='fire'||atk==='ice')) m*=.5;
+    if((ability==='heatproof'||ability==='water-bubble') && atk==='fire') m*=.5;
+    if(ability==='dry-skin'){
+      if(atk==='water') return 0;
+      if(atk==='fire') m*=1.25;
+    }
+    if(ability==='purifying-salt' && atk==='ghost') m*=.5;
+    if((ability==='filter'||ability==='solid-rock'||ability==='prism-armor') && m>1) m*=.75;
+    if(ability==='wonder-guard' && m<=1) return 0;
+    return m;
+  }
+  function pretty(m){
+    const map={0:'×0',0.125:'×⅛',0.25:'×¼',0.375:'×⅜',0.5:'×½',0.75:'×¾',1:'×1',1.25:'×1¼',1.5:'×1½',2:'×2',3:'×3',4:'×4'};
+    return map[m] || ('×'+Math.round(m*1000)/1000);
+  }
+  function badgeHtml(t,label){
+    return `<span class="type-badge" style="background:${C[t]}">${label||Z[t]}<span class="en">${t}</span></span>`;
+  }
+  function chipHtml(x){
+    return `<span class="defchip"><span class="defchip-dot" style="background:${C[x.t]}"></span>${Z[x.t]} <b>${pretty(x.m)}</b></span>`;
+  }
+  function render(){
+    if(a.value && b.value===a.value) b.value='';
+    const original=[a.value,b.value].filter(Boolean);
+    const tv=tera.value;
+    const defs=(tv && tv!=='stellar')?[tv]:original;
+    const vals=T.map(t=>({t,m:abilityMult(t,baseMult(t,defs),ab.value)}));
+    const weak=vals.filter(x=>x.m>1).sort((x,y)=>y.m-x.m);
+    const resist=vals.filter(x=>x.m>0&&x.m<1).sort((x,y)=>x.m-y.m);
+    const immune=vals.filter(x=>x.m===0);
+    const put=(id,arr,msg)=>q(id).innerHTML=arr.length?arr.map(chipHtml).join(''):`<span class="defcalc-empty">${msg}</span>`;
+    put('def-weak',weak,'目前沒有屬性弱點。');
+    put('def-resist',resist,'目前沒有屬性抗性。');
+    put('def-immune',immune,'目前沒有屬性無效。');
+
+    let sum='<span class="defcalc-summary-label">目前防禦屬性</span>'+original.map(t=>badgeHtml(t)).join('');
+    if(tv){
+      sum+='<span class="defcalc-arrow">→</span>';
+      sum+=tv==='stellar'?'<span class="type-badge tera-badge" style="background:#59516f">◇ 星晶<span class="en">stellar</span></span>':badgeHtml(tv,'◇ 太晶 '+Z[tv]);
+    }
+    q('defcalc-summary').innerHTML=sum;
+    q('defcalc-status').textContent=tv?(tv==='stellar'?'星晶化・防禦不變':'太晶化・'+Z[tv]):(original.length===2?'雙屬性':'單屬性');
+
+    const selected=AB.find(x=>x[0]===ab.value);
+    const abilityNote=ab.value?`特性修正：${selected?selected[1]:ab.value}。`:'';
+    const teraNote=tv?(tv==='stellar'?'星晶太晶不改變防禦屬性，因此仍以原始屬性組合計算。':'一般太晶化後，防禦面改以單一太晶屬性計算。'):'';
+    q('defcalc-note').innerHTML=`<strong>計算：</strong>雙屬性倍率相乘。${teraNote} ${abilityNote}`;
+  }
+  [a,b,ab,tera].forEach(el=>el.addEventListener('change',render));
+  render();
+})();
+'''
+          if 'Homepage type / ability / tera defense calculator' not in s:
+              idx = s.rfind('</script>')
+              if idx < 0:
+                  raise SystemExit('Could not find script close tag')
+              s = s[:idx] + panel_js + '\n' + s[idx:]
+
+          if s == original:
+              raise SystemExit('No changes were made')
+          path.write_text(s, encoding='utf-8')
+          print('Updated', path)
+          PY
+
+      - name: Commit the one-time update
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pokecalcu/index.html
+          git rm .github/workflows/update-home-defense-calculator.yml
+          git commit -m "Redesign homepage type defense calculator"
+          git push
