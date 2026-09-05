@@ -320,6 +320,7 @@
   .synergy-item-members{font-size:12.5px;color:var(--muted);line-height:1.6}
   .synergy-item-members b{color:var(--ink)}
 </style>
+  <link rel="stylesheet" href="defcalc.css">
 </head>
 <body>
 <div class="wrap">
@@ -350,6 +351,31 @@
     <div class="hint">輸入中文即可搜尋。會顯示「防禦弱點與抗性」與「攻擊本系打擊面」，並依世代套用正確的相剋表</div>
     <div class="empty-tips" id="egtips"></div>
   </div>
+
+
+  <section class="defcalc" id="defcalc" aria-labelledby="defcalc-title">
+    <div class="defcalc-head">
+      <div>
+        <div class="defcalc-kicker">TYPE DEFENSE LAB</div>
+        <h2 id="defcalc-title">屬性防禦分析</h2>
+        <p>選擇原始屬性、特性與太晶屬性，即時查看目前組合的弱點、抗性與無效屬性。</p>
+      </div>
+      <div class="defcalc-status" id="defcalc-status">單屬性</div>
+    </div>
+    <div class="defcalc-controls">
+      <label class="defcalc-field"><span>屬性 1</span><select id="def-type-1" aria-label="第一屬性"></select></label>
+      <label class="defcalc-field"><span>屬性 2</span><select id="def-type-2" aria-label="第二屬性"></select></label>
+      <label class="defcalc-field"><span>特性</span><select id="def-ability" aria-label="防禦特性"></select></label>
+      <label class="defcalc-field"><span>太晶化</span><select id="def-tera" aria-label="太晶屬性"></select></label>
+    </div>
+    <div class="defcalc-summary" id="defcalc-summary"></div>
+    <div class="defcalc-results">
+      <div class="defcalc-group"><div class="defcalc-group-title"><span>弱點</span><small>WEAKNESS</small></div><div class="defcalc-chips" id="def-weak"></div></div>
+      <div class="defcalc-group"><div class="defcalc-group-title"><span>抗性</span><small>RESISTANCE</small></div><div class="defcalc-chips" id="def-resist"></div></div>
+      <div class="defcalc-group"><div class="defcalc-group-title"><span>無效</span><small>IMMUNITY</small></div><div class="defcalc-chips" id="def-immune"></div></div>
+    </div>
+    <div class="defcalc-note" id="defcalc-note"></div>
+  </section>
 
   <div id="result"></div>
 
@@ -1240,17 +1266,15 @@ function renderCards(entries){
     const d=document.createElement("div");
     const key=teamKeyFor(e);
     const on=STATE.team.has(key);
-    d.className="pcard"+(on?" selected":""); d.tabIndex=0; d.setAttribute("role","button");
+    d.className="pcard"; d.tabIndex=0; d.setAttribute("role","button");
     const primary = imageSrcForEntry(e);
     const candidates = e.img
       ? [e.img, e.formImg, hybridBaseUrl(e.n), pokeOfficialUrl(e.n), pokeSpriteUrl(e.n)]
       : [primary, pokeOfficialUrl(e.n), pokeSpriteUrl(e.n)];
-    d.innerHTML=`<span class="pick${on?" on":""}" data-pickkey="${key}" role="checkbox" aria-checked="${on}" aria-label="加入隊伍分析" tabindex="0"></span><img loading="lazy" src="${primary}" alt="${e.z}" ${imageFallbackAttrs(candidates)}>`;
+    d.innerHTML=`<img loading="lazy" src="${primary}" alt="${e.z}" ${imageFallbackAttrs(candidates)}>`;
     const open=()=>openEntry(e);
     d.addEventListener("click",open);
     d.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); open(); } });
-    const pickEl=d.querySelector(".pick");
-    pickEl.addEventListener("click",ev=>{ ev.stopPropagation(); toggleTeamEntry(e); });
     pickEl.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); ev.stopPropagation(); toggleTeamEntry(e); } });
     frag.appendChild(d);
   });
@@ -1540,5 +1564,6 @@ function init(){
 }
 init();
 </script>
+  <script src="defcalc.js"></script>
 </body>
 </html>
