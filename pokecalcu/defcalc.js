@@ -2,13 +2,12 @@
   const box = document.getElementById('defcalc');
   if (!box) return;
 
-  // Keep the homepage clean: show the defense calculator only after pressing PICK.
+  // Keep the homepage clean: show the defense calculator only after pressing the toggle.
   box.classList.add('defcalc-collapsed');
   const picker = document.createElement('div');
   picker.className = 'defcalc-picker';
   picker.innerHTML = `
     <button class="defcalc-pick-btn" type="button" aria-expanded="false" aria-controls="defcalc">
-      <span class="defcalc-pick-main">PICK</span>
       <span class="defcalc-pick-sub">選取屬性</span>
       <span class="defcalc-pick-arrow">＋</span>
     </button>`;
