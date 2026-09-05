@@ -1275,7 +1275,6 @@ function renderCards(entries){
     const open=()=>openEntry(e);
     d.addEventListener("click",open);
     d.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); open(); } });
-    pickEl.addEventListener("keydown",ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); ev.stopPropagation(); toggleTeamEntry(e); } });
     frag.appendChild(d);
   });
   grid.innerHTML=""; grid.appendChild(frag);
