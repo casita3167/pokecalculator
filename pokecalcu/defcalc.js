@@ -98,3 +98,130 @@
   [type1,type2,ability,tera].forEach(el => el.addEventListener('change',render));
   render();
 })();
+
+// ===== Pokémon matching by selected type combination =====
+(() => {
+  const box = document.getElementById('defcalc');
+  const type1 = document.getElementById('def-type-1');
+  const type2 = document.getElementById('def-type-2');
+  const note = document.getElementById('defcalc-note');
+  if (!box || !type1 || !type2 || !note) return;
+
+  const ZH = {normal:'一般',fire:'火',water:'水',electric:'電',grass:'草',ice:'冰',fighting:'格鬥',poison:'毒',ground:'地面',flying:'飛行',psychic:'超能力',bug:'蟲',rock:'岩石',ghost:'幽靈',dragon:'龍',dark:'惡',steel:'鋼',fairy:'妖精'};
+  const cache = new Map();
+  let requestId = 0;
+
+  const section = document.createElement('section');
+  section.className = 'type-match';
+  section.innerHTML = `
+    <div class="type-match-head">
+      <div>
+        <div class="type-match-kicker">MATCHING POKÉMON</div>
+        <h3>符合此屬性組合的寶可夢</h3>
+        <div class="type-match-sub" id="type-match-sub"></div>
+      </div>
+      <div class="type-match-count" id="type-match-count">—</div>
+    </div>
+    <div class="type-match-grid" id="type-match-grid"></div>`;
+  note.insertAdjacentElement('afterend', section);
+
+  const grid = document.getElementById('type-match-grid');
+  const sub = document.getElementById('type-match-sub');
+  const count = document.getElementById('type-match-count');
+
+  const getId = url => {
+    const m = String(url || '').match(/\/pokemon\/(\d+)\/?$/);
+    return m ? Number(m[1]) : 0;
+  };
+
+  async function fetchType(type) {
+    if (cache.has(type)) return cache.get(type);
+    const p = fetch(`https://pokeapi.co/api/v2/type/${type}`)
+      .then(r => {
+        if (!r.ok) throw new Error(`type ${type}: ${r.status}`);
+        return r.json();
+      })
+      .then(data => data.pokemon.map(x => ({
+        name: x.pokemon.name,
+        id: getId(x.pokemon.url)
+      })).filter(x => x.id > 0 && x.id <= 1025));
+    cache.set(type, p);
+    return p;
+  }
+
+  function zhName(id, fallback) {
+    try {
+      if (typeof DEX_ZH !== 'undefined' && DEX_ZH && DEX_ZH[id]) return DEX_ZH[id];
+    } catch (_) {}
+    return fallback;
+  }
+
+  function cardHtml(p) {
+    const zh = zhName(p.id, p.name);
+    const no = String(p.id).padStart(4,'0');
+    const art = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
+    const fallback = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+    return `<button class="type-match-card" type="button" data-id="${p.id}" data-name="${p.name}" data-zh="${zh}">
+      <img loading="lazy" src="${art}" alt="${zh}" onerror="this.onerror=null;this.src='${fallback}'">
+      <span class="type-match-no">#${no}</span>
+      <span class="type-match-name">${zh}</span>
+    </button>`;
+  }
+
+  function bindCards() {
+    grid.querySelectorAll('.type-match-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = Number(card.dataset.id);
+        const name = card.dataset.name;
+        const zh = card.dataset.zh;
+        try {
+          if (typeof openEntry === 'function') {
+            openEntry({n:id,z:zh,q:[name]});
+            return;
+          }
+        } catch (_) {}
+        const search = document.querySelector('input[type="search"], input[placeholder*="搜尋"]');
+        if (search) {
+          search.value = zh;
+          search.dispatchEvent(new Event('input',{bubbles:true}));
+          search.focus();
+        }
+      });
+    });
+  }
+
+  async function renderMatches() {
+    const rid = ++requestId;
+    const a = type1.value;
+    const b = type2.value && type2.value !== a ? type2.value : '';
+    sub.textContent = b ? `${ZH[a]}＋${ZH[b]}｜精確雙屬性組合` : `${ZH[a]}｜包含此屬性的寶可夢`;
+    count.textContent = '讀取中';
+    grid.innerHTML = '<div class="type-match-loading">正在整理符合條件的寶可夢…</div>';
+
+    try {
+      const first = await fetchType(a);
+      let matches = first;
+      if (b) {
+        const second = await fetchType(b);
+        const names = new Set(second.map(x => x.name));
+        matches = first.filter(x => names.has(x.name));
+      }
+      if (rid !== requestId) return;
+      matches = [...new Map(matches.map(x => [x.id,x])).values()].sort((x,y) => x.id-y.id);
+      count.textContent = `${matches.length} 隻`;
+      grid.innerHTML = matches.length
+        ? matches.map(cardHtml).join('')
+        : '<div class="type-match-loading">沒有找到符合這個屬性組合的寶可夢。</div>';
+      bindCards();
+    } catch (err) {
+      if (rid !== requestId) return;
+      count.textContent = '—';
+      grid.innerHTML = '<div class="type-match-loading">暫時無法讀取寶可夢資料，請稍後再試。</div>';
+      console.warn('type match failed', err);
+    }
+  }
+
+  type1.addEventListener('change', renderMatches);
+  type2.addEventListener('change', renderMatches);
+  renderMatches();
+})();
