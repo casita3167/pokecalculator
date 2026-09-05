@@ -2,6 +2,28 @@
   const box = document.getElementById('defcalc');
   if (!box) return;
 
+  // Keep the homepage clean: show the defense calculator only after pressing PICK.
+  box.classList.add('defcalc-collapsed');
+  const picker = document.createElement('div');
+  picker.className = 'defcalc-picker';
+  picker.innerHTML = `
+    <button class="defcalc-pick-btn" type="button" aria-expanded="false" aria-controls="defcalc">
+      <span class="defcalc-pick-main">PICK</span>
+      <span class="defcalc-pick-sub">選取屬性</span>
+      <span class="defcalc-pick-arrow">＋</span>
+    </button>`;
+  box.parentNode.insertBefore(picker, box);
+  const pickBtn = picker.querySelector('.defcalc-pick-btn');
+  const pickArrow = picker.querySelector('.defcalc-pick-arrow');
+  pickBtn.addEventListener('click', () => {
+    const opening = box.classList.contains('defcalc-collapsed');
+    box.classList.toggle('defcalc-collapsed', !opening);
+    picker.classList.toggle('open', opening);
+    pickBtn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    pickArrow.textContent = opening ? '−' : '＋';
+    if (opening) box.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+
   const TYPES = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
   const ZH = {normal:'一般',fire:'火',water:'水',electric:'電',grass:'草',ice:'冰',fighting:'格鬥',poison:'毒',ground:'地面',flying:'飛行',psychic:'超能力',bug:'蟲',rock:'岩石',ghost:'幽靈',dragon:'龍',dark:'惡',steel:'鋼',fairy:'妖精'};
   const COLOR = {normal:'#828282',fire:'#E5623E',water:'#3199E1',electric:'#DFBC28',grass:'#429837',ice:'#47C9C8',fighting:'#E48F21',poison:'#9354CB',ground:'#A3733D',flying:'#75AACF',psychic:'#EA6C8D',bug:'#A09F27',rock:'#AAA482',ghost:'#6E4570',dragon:'#576FBC',dark:'#504647',steel:'#74AFCB',fairy:'#E08CE1'};
